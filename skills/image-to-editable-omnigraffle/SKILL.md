@@ -1,11 +1,11 @@
 ---
 name: image-to-editable-omnigraffle
-description: Reconstruct supplied figure images or PDF panels as editable native OmniGraffle diagrams, with live Times New Roman text, attached connectors, transparent extracted assets, and data-backed scientific plots. Export selection-cropped transparent PDFs. Use for image-to-Graffle conversion and editable scientific figure reconstruction; not for wrapping a whole image in a Graffle file.
+description: Faithfully reconstruct supplied figure images or PDF panels as editable native OmniGraffle diagrams, with live Times New Roman text, attached connectors, transparent extracted assets, and data-backed scientific plots. Export selection-cropped transparent PDFs. Use for image-to-Graffle conversion and editable scientific figure reconstruction; not for wrapping a whole image in a Graffle file.
 ---
 
 # Image to Editable OmniGraffle
 
-Turn a figure image into a `.graffle` source and a tightly cropped vector PDF. Use the image as the visual reference and supplied manuscript/data as the scientific authority. A raster concept may contain incorrect labels or connections: correct these from evidence, and record the correction.
+Turn a figure image into a visually matching `.graffle` source and a selected-object vector PDF. **Reconstruction preserves the supplied PNG composition by default.** It is not a fresh diagram designed from the same manuscript. Read [fidelity.md](references/fidelity.md) before inventory or authoring. Scientific corrections must be local, evidence-backed, and recorded as explicit differences; they do not authorize unrelated visual simplification.
 
 ## Scope and working files
 
@@ -15,12 +15,12 @@ Use optional installed skills where helpful: `ccf-visual-composer` for compositi
 
 ## Decide every object's source before drawing
 
-Inventory all text, equations, shapes, connectors, illustrations and quantitative panels. Classify each as:
+Measure the source canvas/crop and inventory all text, equations, shapes, connectors, illustrations and quantitative panels, including repeated feature-vector cells, tensor strips, masks, small annotations and group containers. Record pixel bounds/routes and typography before choosing native objects. Preserve the source object count and appearance; classify each as:
 
 1. **Native:** ordinary text, modules, graph nodes, tensor grids, axes, simple symbols and connectors. Rebuild these with native editable elements. Use Times New Roman (`TimesNewRomanPSMT`, bold `TimesNewRomanPS-BoldMT`); report necessary glyph fallback. Preserve mathematical distinctions and signed/ordered target roles.
 2. **Extracted asset:** complex illustrations, photos, textures or irregular artwork whose identity must be preserved. Use the host image-edit tool to isolate the exact object with a transparent background. Request no redraw, no added text and no geometry/color changes. Inspect alpha, edges, missing strokes and source identity before embedding. Do not crop a whole panel or the full figure and claim native editability. If a clean source already has transparency, reuse it. Deterministic cropping/background editing is used only when the user explicitly requests that route.
 3. **Scientific plot:** when data exist, regenerate curves/bars in Python from those values. Keep units, masks, uncertainty and provenance. Export transparent PDF/SVG/PNG as needed, or map data into native polyline coordinates with native axes/text. An embedded vector plot is movable/resizable but its internal points are not necessarily OmniGraffle-editable; say so. Never recover quantitative results from an AI-generated plot. If data are absent, preserve the supplied plot as a separately replaceable asset, label its limitations, and do not invent values.
-4. **Equation:** use native text for simple expressions. Preserve complex math as a separate vector asset if native text cannot render it faithfully; report that editability boundary.
+4. **Equation:** preserve the source’s typeset math. Use accurate native rich text for simple expressions; otherwise transcribe LaTeX and render a separate vector asset. Literal `h_G`, `z^F` or flattened fractions are not faithful substitutes for typeset indices and equations. Report the asset’s editability boundary.
 
 Solve mandatory complex-asset extraction before reconstructing dependent layout. If it fails, retain the working source and report the specific missing object; do not silently replace it with an unrelated icon. Native reconstruction of actual graph nodes or geometric symbols is appropriate and is not an illustration-substitution workaround.
 
@@ -28,7 +28,7 @@ Solve mandatory complex-asset extraction before reconstructing dependent layout.
 
 Read [native-workflow.md](references/native-workflow.md) before the first native execution. Inspect current application APIs rather than guessing property names.
 
-Use `scripts/build_omnigraffle.py manifest.json --out draw.js` for repeatable native shapes, text, lines and plots. The manifest uses publication points, not screenshot pixels. Record source dimensions and map source pixels to points consistently; choose canvas width to match final insertion width. Adjust the layout before shrinking text below readable size.
+Use `scripts/build_omnigraffle.py manifest.json --out draw.js` for repeatable native shapes, text, lines and plots. Default manifests use measured `bbox_px`, `points_px`, `font_px` and stroke/radius fields. The compiler verifies the reference file hash/dimensions and applies one isotropic source-to-point transform; height is derived. Independent point layouts require explicit user-authorized `mode: redesign`. Do not select redesign merely to clear a missing-measurement error. Preserve panel proportions, artwork, type hierarchy, alignment and whitespace.
 
 The builder creates an OmniGraffle Automation script. Run it in a **new empty document** through the application's console and a FilePicker. It refuses nonempty documents. It does not launch apps, inject OS events, save files, change preferences or upload anything.
 
@@ -46,6 +46,8 @@ Export **PDF → Selection (Current Canvas) → 100%** with **Transparent backgr
 
 Check all of the following:
 
+- The exact exported PDF is rendered and compared against the declared source crop using `scripts/compare_reference.py`. Inspect side-by-side and overlay diagnostics, plus each panel. Record the reviewed render hash. A clean export or native count is not a visual-fidelity pass.
+- Source and PDF preserve panel proportions, vector/tensor/matrix details, text scale and wrapping, equation typography, artwork, route geometry and spacing, except for explicitly recorded scientific corrections.
 - Source and PDF show the same labels, scientific relationships and plot values.
 - Text, arrows, axes and legend fit at final paper width; no clipping or crossing through unrelated labels.
 - PDF dimensions match selected-object bounds; fonts are embedded and margins are intentional.
@@ -59,4 +61,4 @@ If the UI becomes stale, refresh its accessibility state. Dismiss a stuck menu w
 
 ## Delivery
 
-Return the native source, exported PDF and useful preview. State which parts are native, vector assets or raster assets; include source-data provenance and actual checks. Retain the minimal manifest/script/assets necessary to reproduce the result. Do not call the figure submission-ready if layout or scientific checks remain unresolved.
+Return the native source, exported PDF and useful preview. State which parts are native, vector assets or raster assets; include source-data provenance and actual checks. Retain the minimal manifest/script/assets necessary to reproduce the result. Report structural, scientific and visual-fidelity status separately. Do not declare reconstruction complete while visual fidelity is failed or unreviewed, even if native editability passes. Do not call the figure submission-ready if layout or scientific checks remain unresolved.

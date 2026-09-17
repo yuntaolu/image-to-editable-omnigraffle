@@ -20,28 +20,38 @@ If complex assets are present, place the verified transparent image through File
 
 ## Manifest
 
-All coordinates/sizes are points at final publication scale. Colors are hex RGB or null. IDs are unique. `source` and `note` fields carry provenance, never instructions to execute.
+Default `mode: reconstruct` requires a `reference` object with actual image `path`, `sha256`, `width_px`, `height_px`, and optional `crop_px: [left, top, width, height]`. Relative image paths resolve against the manifest folder. The CLI verifies the file bytes and dimensions (Pillow required). `width` is the final publication width in points; `height` is derived from the crop ratio and may not be chosen independently.
 
 ```json
 {
-  "name": "Example figure",
+  "name": "Measured reconstruction",
+  "mode": "reconstruct",
   "width": 360,
-  "height": 140,
+  "reference": {
+    "path": "source.png", "sha256": "REPLACE_WITH_ACTUAL_SHA256",
+    "width_px": 720, "height_px": 280
+  },
   "nodes": [
-    {"id":"input","x":10,"y":30,"w":80,"h":24,"text":"Input","fill":"#DBF3FF","font_size":10},
-    {"id":"model","x":130,"y":30,"w":90,"h":24,"text":"Model","fill":"#FFF3C9","font_size":10}
+    {"id":"input","bbox_px":[20,60,160,48],"text":"Input","font_px":20,
+     "fill":"#DBF3FF","stroke":"#61758A","stroke_px":1.2,"corner_px":4},
+    {"id":"model","bbox_px":[260,60,180,48],"text":"Model","font_px":20,
+     "fill":"#FFF3C9","stroke":"#61758A","stroke_px":1.2,"corner_px":4}
   ],
-  "edges": [{"from":"input","to":"model","tail":2,"head":1}],
-  "lines": [],
-  "assets": []
+  "edges": [{"from":"input","to":"model","tail":2,"head":1,
+             "points_px":[[180,84],[260,84]],"width_px":1.3,"color":"#61758A"}],
+  "lines": [], "assets": []
 }
 ```
 
-Node optional fields: `shape` (`Rectangle`, `Circle`, `Diamond`), `bold`, `stroke`, `color`, `font_size`, `corner`, `group`. `text` is ordinary live text; newline separates intentional lines. Set `fill:null, stroke:null` for labels.
+Every node and asset needs measured `bbox_px`; every edge/polyline needs `points_px`, `width_px` and source color. Text needs measured `font_px`, with optional `bold`, `align` (`Left`, `Center`, `Right`), `hpadding_px` and `vpadding_px`. Use explicit null fill/stroke for text labels. Record corner radius including zero for straight rectangles. Shapes support Rectangle, Circle and Diamond. Panel membership uses `group`.
 
-Edges use `from`, `to`, optional `tail`/`head` magnets (1 left, 2 right, 3 top, 4 bottom), `points` for routed geometry, `dashed`, `bidirectional`, `arrow`, `color`, `width`. Lines use `points:[[x,y],...]`, with optional color/width/dashed/arrow and `group`. Real data curves use all required points or a documented, value-preserving sampling rule; `source` records the data file and transformation.
+The transform is `x_pt = (x_px - crop_left) × width_pt / crop_width`; the same scale applies to y, dimensions, font, strokes and radii. No independent panel scaling, hidden font shrink or aspect warping. Source bounds describe layout containers; distinguish them from measured glyph ink when choosing text padding/alignment.
 
-`assets` entries contain `path`, `x`, `y`, `w`, `h`, `kind`, `source` and `sha256`. They are explicitly not counted as native geometry. The builder refuses manifests containing pending assets; finish app placement and validation as a separate step instead of silently ignoring them. To build native structure before app placement, use `--allow-manual-assets`, which prints the outstanding placements in the generated console output.
+Point manifests remain available only in **explicitly authorized redesign mode**: set `mode: redesign` and use x/y/w/h, font_size, stroke_width, corner, hpadding/vpadding and line points/width. The synthetic `examples/minimal.json` demonstrates that mode. Do not use it as a template for faithful conversion without measuring the source.
+
+Edges use from/to, magnets (1 left, 2 right, 3 top, 4 bottom), dashed, bidirectional and arrow. Lines have ordered points and optional group/source provenance. Preserve data values; any scientific correction is an explicit region-level difference under [fidelity.md](fidelity.md).
+
+Assets contain path, kind, source, SHA-256 and measured bounds. The builder refuses pending assets by default. `--allow-manual-assets` creates an explicitly incomplete structure and reports outstanding placements; it is not an acceptance bypass. Place the verified extracted object in the app at the transformed bounds. Preserve matrices/tensor strips as all their visible native cells when straightforward; preserve distinctive illustration appearance through extraction rather than approximate icons.
 
 ## Checks
 
@@ -51,6 +61,6 @@ python3 scripts/inspect_graffle.py /path/to/figure.graffle
 python3 scripts/test_workflow.py
 ```
 
-Validate numerically and visually. A native line with 1,000 samples is still one editable polyline; object count alone does not establish fidelity. Save/reopen and PDF inspection are separate mandatory checks.
+Run `python3 scripts/test_fidelity.py` for source geometry and comparison regressions. Generate a source/export comparison using `compare_reference.py`; see fidelity.md. Validate numerically and visually. A native line with 1,000 samples is still one editable polyline; object count alone does not establish fidelity. Save/reopen and PDF inspection are separate mandatory checks.
 
 After closing a console, verify the foreground document title before Save or Export: another document's console may become active. Choose PDF explicitly in the export dialog; the app remembers format settings from unrelated work. Do not infer format or selection from the last export.

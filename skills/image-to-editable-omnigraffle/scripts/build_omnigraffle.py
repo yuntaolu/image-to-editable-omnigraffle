@@ -5,6 +5,7 @@ import json
 import math
 import re
 from pathlib import Path
+from source_geometry import prepare, verify_reference
 
 
 def validate(m, allow_manual_assets=False):
@@ -44,6 +45,8 @@ def validate(m, allow_manual_assets=False):
         if n.get('shape','Rectangle') not in ('Rectangle','Circle','Diamond'):
             raise ValueError('Unsupported native shape')
         number(n.get('font_size',9),'font_size',True)
+        number(n.get('stroke_width',.6),'stroke_width',True)
+        if n.get('align','Center') not in ('Left','Center','Right'):raise ValueError('Invalid text alignment')
         for k in ('fill','stroke','color'):
             if k in n: color(n[k])
     for e in m.get('edges',[]):
@@ -80,8 +83,8 @@ NATIVE = r'''
   for(const n of M.nodes){
     const s=c.newShape();s.geometry=new Rect(n.x,n.y,n.w,n.h);s.shape=n.shape||'Rectangle';s.name=n.id;s.text=n.text||'';
     s.fontName=n.bold?'TimesNewRomanPS-BoldMT':'TimesNewRomanPSMT';s.textSize=n.font_size||9;s.textColor=rgb(n.color===undefined?'#243547':n.color);
-    s.textHorizontalPadding=1;s.textVerticalPadding=0;s.textHorizontalAlignment=HorizontalTextAlignment.Center;s.textVerticalPlacement=VerticalTextPlacement.Middle;
-    s.fillColor=rgb(n.fill===undefined?null:n.fill);s.strokeColor=rgb(n.stroke===undefined?(n.fill?'#61758A':null):n.stroke);s.strokeThickness=.6;s.shadowColor=null;s.cornerRadius=n.corner===undefined?2:n.corner;
+    s.textHorizontalPadding=n.hpadding===undefined?1:n.hpadding;s.textVerticalPadding=n.vpadding||0;s.textHorizontalAlignment=HorizontalTextAlignment[n.align||'Center'];s.textVerticalPlacement=VerticalTextPlacement.Middle;
+    s.fillColor=rgb(n.fill===undefined?null:n.fill);s.strokeColor=rgb(n.stroke===undefined?(n.fill?'#61758A':null):n.stroke);s.strokeThickness=n.stroke_width === undefined ? 0.6 : n.stroke_width;s.shadowColor=null;s.cornerRadius=n.corner===undefined?2:n.corner;
     s.magnets=[new Point(-1,0),new Point(1,0),new Point(0,-1),new Point(0,1)];nodes.set(n.id,s);member(s,n.group);
   }
   function style(l,d){l.strokeColor=rgb(d.color===undefined?'#61758A':d.color);l.strokeThickness=d.width||.65;l.shadowColor=null;l.lineType=LineType.Straight;if(d.points)l.points=d.points.map(p=>new Point(...p));l.headType=d.arrow===false?'None':'FilledArrow';l.headScale=.55;l.tailType=d.bidirectional?'FilledArrow':'None';l.tailScale=.55;if(d.dashed)l.strokePattern=StrokeDash.Dash2on2off;member(l,d.group);}
@@ -96,6 +99,7 @@ NATIVE = r'''
 
 
 def compile_manifest(m, allow_manual_assets=False):
+    m=prepare(m)
     validate(m,allow_manual_assets)
     return 'const M='+json.dumps(m,ensure_ascii=False,allow_nan=False,separators=(',',':'))+';\n'+NATIVE
 
@@ -107,7 +111,17 @@ def main():
     ap.add_argument('--allow-manual-assets',action='store_true')
     args=ap.parse_args()
     m=json.loads(args.manifest.read_text(encoding='utf-8'))
+    verify_reference(m,args.manifest.parent)
     script=compile_manifest(m,args.allow_manual_assets)
+    inputs=[args.manifest]
+    ref=m.get('reference',{})
+    if isinstance(ref,dict) and isinstance(ref.get('path'),str):
+        inputs.append(args.manifest.parent/Path(ref['path']))
+    for asset in m.get('assets',[]):
+        if isinstance(asset.get('path'),str):inputs.append(args.manifest.parent/Path(asset['path']))
+    for source in inputs:
+        if args.out.resolve()==source.resolve() or (args.out.exists() and source.exists() and args.out.samefile(source)):
+            raise ValueError('Output must not overwrite manifest, reference image or source asset')
     args.out.parent.mkdir(parents=True,exist_ok=True)
     args.out.write_text(script,encoding='utf-8')
     print(f'Wrote {args.out}; execute in a new blank OmniGraffle document.')

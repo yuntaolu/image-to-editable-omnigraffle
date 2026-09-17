@@ -1,6 +1,16 @@
 # Validation record
 
-Validated on macOS with OmniGraffle 7.26 and a native Computer Use integration, 2026-09-18.
+Updated 2026-09-18 after user review identified that the initial native reconstructions did not sufficiently match their source PNGs.
+
+## Source-fidelity regression
+
+The initial two private examples passed structural/native checks but **failed visual fidelity**. Their exported aspect ratios drifted by 23.4% and 28.2% from the reference PNGs; feature-vector strips, mask matrices, panel grouping and equation typography had also been simplified. Those earlier checks must not be read as visual approval.
+
+The revised default requires measured source geometry, source hash/dimension verification, isotropic scaling, a complete visual inventory and a source/export comparison. Explicit redesign remains separate. Both prior examples are now rejected by the aspect-ratio diagnostic; their images are not distributed.
+
+New executable tests cover source hash and dimension mismatches, cropping, uniform font/stroke/geometry scaling, forbidden independent coordinates/aspect changes, missing measurements, same-image diagnostics, large aspect failure and same-aspect positional drift. Additional regressions reject overwriting the manifest/reference (including hard links) and bound extreme-aspect comparison images without zero-sized resizes. A same-image comparison still returns `requires_visual_review`, not an automatic pass. The changes have not retroactively repaired the two earlier native figures.
+
+The following native checks were performed on the initial version using OmniGraffle 7.26. They establish native-operation behavior, not source fidelity.
 
 ## Executed checks
 
