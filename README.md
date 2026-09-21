@@ -56,9 +56,9 @@ Export settings: **PDF → Selection (Current Canvas) → 100% → Transparent b
 
 ## Workflow references
 
-The object-source decision process was informed by [image-to-editable-ppt-skill](https://github.com/ningzimu/image-to-editable-ppt-skill), an MIT-licensed PowerPoint reconstruction workflow. No PowerPoint runtime is bundled or required here. Optional locally installed `yuntao-omnigraffle`, `ccf-visual-composer`, and `nature-figure` skills can assist with native authoring, composition, and Python scientific plotting.
+The object-source decision process was informed by [image-to-editable-ppt-skill](https://github.com/ningzimu/image-to-editable-ppt-skill), an MIT-licensed PowerPoint reconstruction workflow. No PowerPoint runtime is bundled or required here. Optional locally installed [yuntao-omnigraffle](https://github.com/yuntaolu/yuntao-omnigraffle), [ccf-visual-composer](https://github.com/mikubaka88/CCFA-Skills/tree/main/ccf-visual-composer), and [nature-figure](https://github.com/Yuan1z0825/nature-skills/tree/main/skills/nature-figure) skills can assist with native authoring, composition, and Python scientific plotting.
 
-This repository contains generic instructions, helpers, and a synthetic example. Research manuscripts, test images, source measurements and reconstructed private figures are excluded.
+This repository contains generic instructions, helpers, and a synthetic example. Research manuscripts, test images, source measurements, and reconstructed private figures are excluded.
 
 ## License
 
